@@ -1,3 +1,4 @@
+Good news — since we just fixed the image file's location, this might already be working if that earlier edit went through. But given how many things slipped through the cracks today, let's just confirm and redo it cleanly to be safe.```typescript
 'use client';
 
 import { useState } from 'react';
@@ -28,16 +29,11 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
       <div className="w-full max-w-sm rounded-card border border-line bg-white p-8 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-card bg-navy-tint">
-          {/* Placeholder mark — swap for the real logo asset once the
-              rebrand file (SVG/PNG) is ready. */}
-          <svg width="34" height="34" viewBox="0 0 100 100" fill="none">
-            <path d="M32,58 L50,20 L68,58" stroke="#0A365D" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-            <path d="M16,86 L48,50 L60,62 L92,14" stroke="#C1571A" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-            <polygon points="70,10 96,8 90,34" fill="#C1571A" />
-          </svg>
-        </div>
-        <h1 className="mb-1 text-xl font-medium text-navy">TRM Partners</h1>
+        <img
+          src="/trm-logo-full.png"
+          alt="TRM Partners"
+          className="mx-auto mb-4 h-auto w-full max-w-[280px]"
+        />
         <p className="mb-6 text-sm text-ink-soft">Admin sign in</p>
 
         <form onSubmit={handleSubmit} className="space-y-4 text-left">
@@ -74,3 +70,4 @@ export default function LoginPage() {
     </div>
   );
 }
+```
