@@ -1,0 +1,22 @@
+import { logout } from './actions';
+
+// Wraps every /admin/* page (the dashboard AND every project detail
+// tab, since Next.js nests layouts automatically) with one shared
+// header. This is the one place a logout button needs to exist.
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div>
+      <header className="flex items-center justify-between border-b border-line bg-navy px-8 py-4">
+        <span className="text-sm font-semibold uppercase tracking-wide text-white">
+          TRM Partners — Admin
+        </span>
+        <form action={logout}>
+          <button className="text-xs font-medium text-white/80 underline decoration-dotted hover:text-white">
+            Log out
+          </button>
+        </form>
+      </header>
+      {children}
+    </div>
+  );
+}
