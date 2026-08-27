@@ -30,6 +30,8 @@ more error-prone than starting clean.
    - `supabase/rls_policies.sql`
    - `supabase/functions.sql`
    - `supabase/seed.sql`
+   - `supabase/storage_setup.sql` — creates the file storage bucket
+     used by photo/document/estimate/contract uploads
 4. Go to Settings → API and copy the **Project URL** and **anon public
    key** — you'll need both in step 3 below. (No service role key needed
    this time.)
@@ -69,16 +71,31 @@ more error-prone than starting clean.
 
 ## What's built vs. what's next
 
-Working: login, admin dashboard (real project list with live completion
-%), Add Project.
+Working: login, admin dashboard, Add Project, and the full project
+detail page with eight tabs — Overview, Milestones (with to-dos and
+photos), Financials, Profitability, Change Orders, Documents,
+Matterport, and Daily Log. Every one of these reads and writes real
+rows in your Supabase database.
 
-Not yet built: the individual project detail page and its tabs
-(Milestones, Financials, Change Orders, Documents, Matterport, Daily
-Log, Selections, RFIs). The database tables for all of these already
-exist in `schema.sql` — building each tab is a repeat of the exact
-pattern in `src/app/admin/page.tsx`: a Supabase query plus the
-corresponding UI from the HTML prototype. This is the right next task
-to hand to Claude Code.
+**Deliberately deferred to a later phase, since they're really
+client-facing features and there's no client login yet:**
+
+- **QuickBooks Online sync** — payments are recorded manually on the
+  Financials tab instead, which works fine on its own. When this phase
+  starts: register an app at developer.intuit.com, get a Client
+  ID/Secret, and build an OAuth connect flow + webhook receiver.
+- **Client e-signing on change orders** — the admin updates a change
+  order's status directly (with a plain "approved by" name field for
+  your own records) rather than a client signing it themselves.
+- **Selections** — client-chosen finishes tracking. Removed for this
+  phase; add back once clients can log in and choose their own options.
+- **RFIs** — question/answer log, mainly useful once clients can
+  answer questions directed at them. Removed for this phase.
+
+Nothing about this deferral requires redesigning the database — the
+relevant tables and columns (`qbo_connection`, `signed_by_name`,
+`selections`, `rfis`, etc.) already exist in `schema.sql` for whenever
+you're ready to build these out.
 
 ## Adding client logins back later
 
