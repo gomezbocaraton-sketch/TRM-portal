@@ -34,6 +34,45 @@ function ExpiryBadge({ label, dateStr }: { label: string; dateStr: string | null
   return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${style}`}>{text}</span>;
 }
 
+type FlaggedItem = { contractorName: string; label: string; dateStr: string; status: 'expired' | 'soon' };
+
+function buildFlaggedItems(subs: { name: string; insurance_expiry: string | null; license_expiry: string | null }[]): FlaggedItem[] {
+  const items: FlaggedItem[] = [];
+  for (const sub of subs) {
+    const insStatus = expiryStatus(sub.insurance_expiry);
+    if (insStatus === 'expired' || insStatus === 'soon') {
+      items.push({ contractorName: sub.name, label: 'Insurance', dateStr: sub.insurance_expiry!, status: insStatus });
+    }
+    const licStatus = expiryStatus(sub.license_expiry);
+    if (licStatus === 'expired' || licStatus === 'soon') {
+      items.push({ contractorName: sub.name, label: 'License', dateStr: sub.license_expiry!, status: licStatus });
+    }
+  }
+  // Expired items first, then soonest-expiring.
+  return items.sort((a, b) => (a.status === b.status ? a.dateStr.localeCompare(b.dateStr) : a.status === 'expired' ? -1 : 1));
+}
+
+function ExpiryWarningBanner({ items }: { items: FlaggedItem[] }) {
+  if (items.length === 0) return null;
+  const hasExpired = items.some((i) => i.status === 'expired');
+
+  return (
+    <div className={`rounded-card border p-4 ${hasExpired ? 'border-red-200 bg-red-50' : 'border-accent bg-accent-tint'}`}>
+      <p className={`mb-2 text-sm font-semibold ${hasExpired ? 'text-red-700' : 'text-accent-deep'}`}>
+        {items.length} document{items.length > 1 ? 's' : ''} {hasExpired ? 'expired or ' : ''}expiring within 30 days
+      </p>
+      <div className="space-y-1">
+        {items.map((item, i) => (
+          <p key={i} className="text-xs text-ink">
+            <span className="font-semibold">{item.contractorName}</span> — {item.label}{' '}
+            {item.status === 'expired' ? 'expired' : 'expires'} {item.dateStr}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default async function SubcontractorsTab({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const projectId = Number(id);
@@ -61,9 +100,12 @@ export default async function SubcontractorsTab({ params }: { params: Promise<{ 
   );
 
   const addSubWithId = addSubcontractor.bind(null, projectId);
+  const flaggedItems = buildFlaggedItems(subsWithUrls);
 
   return (
     <div className="space-y-6">
+      <ExpiryWarningBanner items={flaggedItems} />
+
       <form action={addSubWithId} className="rounded-card border border-line bg-white p-6">
         <p className="mb-4 text-sm font-semibold text-navy">Add contractor</p>
         <div className="mb-3 grid grid-cols-2 gap-4">
