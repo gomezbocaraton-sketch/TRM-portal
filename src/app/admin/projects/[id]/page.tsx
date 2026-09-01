@@ -14,6 +14,16 @@ export default async function OverviewTab({ params }: { params: Promise<{ id: st
   const uploadEstimate = uploadEstimateOrContract.bind(null, projectId, 'estimate');
   const uploadContract = uploadEstimateOrContract.bind(null, projectId, 'contract');
 
+  // Bucket is private — generate a signed URL for whichever files exist.
+  const estimateUrl = project.estimate_file_key
+    ? (await supabase.storage.from('project-files').createSignedUrl(project.estimate_file_key, 3600)).data
+        ?.signedUrl
+    : null;
+  const contractUrl = project.contract_file_key
+    ? (await supabase.storage.from('project-files').createSignedUrl(project.contract_file_key, 3600)).data
+        ?.signedUrl
+    : null;
+
   return (
     <div className="space-y-6">
       <div className="rounded-card border border-line bg-white p-6">
@@ -61,8 +71,10 @@ export default async function OverviewTab({ params }: { params: Promise<{ id: st
             <button className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-navy">
               Upload
             </button>
-            {project.estimate_file_key && (
-              <span className="text-xs text-ink-soft">File on record</span>
+            {estimateUrl && (
+              <a href={estimateUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-accent-deep underline">
+                View file
+              </a>
             )}
           </form>
         </div>
@@ -74,8 +86,10 @@ export default async function OverviewTab({ params }: { params: Promise<{ id: st
             <button className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-navy">
               Upload
             </button>
-            {project.contract_file_key && (
-              <span className="text-xs text-ink-soft">File on record</span>
+            {contractUrl && (
+              <a href={contractUrl} target="_blank" rel="noreferrer" className="text-xs font-semibold text-accent-deep underline">
+                View file
+              </a>
             )}
           </form>
         </div>
