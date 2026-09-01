@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
 import { uploadDocument } from './actions';
-import DocumentUploader from './DocumentUploader';
 
 const CATEGORIES = ['plans', 'permits', 'insurance', 'other'] as const;
 const LABELS: Record<string, string> = {
@@ -36,7 +35,28 @@ export default async function DocumentsTab({ params }: { params: Promise<{ id: s
 
   return (
     <div className="space-y-6">
-      <DocumentUploader action={uploadWithId} />
+      <form action={uploadWithId} className="rounded-card border border-line bg-white p-6">
+        <p className="mb-4 text-sm font-semibold text-navy">Upload document</p>
+        <div className="mb-3 grid grid-cols-2 gap-4">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-ink-soft">Category</label>
+            <select name="category" className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm">
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>{LABELS[c]}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-ink-soft">File</label>
+            <input type="file" name="file" className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm" />
+          </div>
+        </div>
+        <div className="mb-4">
+          <label className="mb-1 block text-xs font-medium text-ink-soft">Notes (optional)</label>
+          <input name="notes" className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm" />
+        </div>
+        <button className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white">Save document</button>
+      </form>
 
       {CATEGORIES.map((cat) => {
         const inCategory = docsWithUrls.filter((d) => d.category === cat);
