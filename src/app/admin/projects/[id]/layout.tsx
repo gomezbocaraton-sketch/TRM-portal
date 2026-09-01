@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 const TABS = [
   { href: '', label: 'Overview' },
   { href: '/milestones', label: 'Milestones' },
+  { href: '/punchlist', label: 'Punch List' },
   { href: '/financials', label: 'Financials' },
   { href: '/profitability', label: 'Profitability' },
   { href: '/changeorders', label: 'Change Orders' },
