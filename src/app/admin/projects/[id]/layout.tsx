@@ -8,9 +8,11 @@ const TABS = [
   { href: '/financials', label: 'Financials' },
   { href: '/profitability', label: 'Profitability' },
   { href: '/changeorders', label: 'Change Orders' },
+  { href: '/subcontractors', label: 'Subcontractors' },
   { href: '/documents', label: 'Documents' },
   { href: '/matterport', label: 'Matterport' },
   { href: '/dailylog', label: 'Daily Log' },
+  { href: '/rfis', label: 'RFIs' },
 ];
 
 export default async function ProjectLayout({
