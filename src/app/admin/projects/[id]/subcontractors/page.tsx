@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { addSubcontractor, addQuote, decideQuote, uploadInvoice } from './actions';
+import { addSubcontractor, addQuote, decideQuote, uploadInvoice, uploadLienWaiver } from './actions';
 
 async function signedUrl(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -8,6 +8,30 @@ async function signedUrl(
   if (!key) return null;
   const { data } = await supabase.storage.from('project-files').createSignedUrl(key, 3600);
   return data?.signedUrl ?? null;
+}
+
+// Flags anything expiring within 30 days as a warning, and anything
+// already past as expired — the whole point of tracking these dates
+// in the first place is catching lapses before they become a problem.
+function expiryStatus(dateStr: string | null): 'expired' | 'soon' | 'ok' | null {
+  if (!dateStr) return null;
+  const days = (new Date(dateStr).getTime() - Date.now()) / 86_400_000;
+  if (days < 0) return 'expired';
+  if (days <= 30) return 'soon';
+  return 'ok';
+}
+
+function ExpiryBadge({ label, dateStr }: { label: string; dateStr: string | null }) {
+  const status = expiryStatus(dateStr);
+  if (!status) return null;
+  const style =
+    status === 'expired'
+      ? 'bg-red-50 text-red-700'
+      : status === 'soon'
+      ? 'bg-accent-tint text-accent-deep'
+      : 'bg-paper text-ink-soft';
+  const text = status === 'expired' ? `${label} expired ${dateStr}` : `${label} expires ${dateStr}`;
+  return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${style}`}>{text}</span>;
 }
 
 export default async function SubcontractorsTab({ params }: { params: Promise<{ id: string }> }) {
@@ -71,6 +95,10 @@ export default async function SubcontractorsTab({ params }: { params: Promise<{ 
             <input name="licenseNumber" className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm" />
           </div>
           <div>
+            <label className="mb-1 block text-xs font-medium text-ink-soft">License expiry</label>
+            <input type="date" name="licenseExpiry" className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm" />
+          </div>
+          <div>
             <label className="mb-1 block text-xs font-medium text-ink-soft">License file</label>
             <input type="file" name="licenseFile" className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm" />
           </div>
@@ -78,7 +106,7 @@ export default async function SubcontractorsTab({ params }: { params: Promise<{ 
             <label className="mb-1 block text-xs font-medium text-ink-soft">Insurance expiry</label>
             <input type="date" name="insuranceExpiry" className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm" />
           </div>
-          <div>
+          <div className="col-span-2">
             <label className="mb-1 block text-xs font-medium text-ink-soft">Insurance certificate</label>
             <input type="file" name="insuranceFile" className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm" />
           </div>
@@ -114,8 +142,11 @@ export default async function SubcontractorsTab({ params }: { params: Promise<{ 
                   )}
                 </div>
               </div>
-              {sub.insurance_expiry && (
-                <p className="mb-4 text-xs text-ink-soft">Insurance expires {sub.insurance_expiry}</p>
+              {(sub.insurance_expiry || sub.license_expiry) && (
+                <div className="mb-4 flex flex-wrap gap-2">
+                  <ExpiryBadge label="Insurance" dateStr={sub.insurance_expiry} />
+                  <ExpiryBadge label="License" dateStr={sub.license_expiry} />
+                </div>
               )}
 
               <div className="border-t border-line pt-4">
@@ -178,6 +209,21 @@ export default async function SubcontractorsTab({ params }: { params: Promise<{ 
                             <a href={q.invoiceUrl} target="_blank" rel="noreferrer" className="rounded-lg border border-line px-2.5 py-1 text-xs font-semibold text-navy">
                               View invoice
                             </a>
+                          )}
+
+                          {q.invoiceUrl && !q.lien_waiver_file_key && (
+                            <form action={uploadLienWaiver.bind(null, projectId, q.id)} className="flex items-center gap-2">
+                              <input type="file" name="waiverFile" required className="text-xs" />
+                              <button className="rounded-lg border border-line px-2.5 py-1 text-xs font-semibold text-navy">
+                                Upload lien waiver
+                              </button>
+                            </form>
+                          )}
+
+                          {q.lien_waiver_file_key && (
+                            <span className="rounded-full bg-success-tint px-2.5 py-1 text-xs font-semibold text-success">
+                              Lien waiver on file ({q.lien_waiver_received_date})
+                            </span>
                           )}
                         </div>
                       </div>
