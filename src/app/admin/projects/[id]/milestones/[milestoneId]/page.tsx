@@ -24,6 +24,16 @@ export default async function MilestoneDetailPage({
   const addTodoWithIds = addTodo.bind(null, projectId, mId);
   const uploadPhotoWithIds = uploadPhoto.bind(null, projectId, mId);
 
+  // Bucket is private — each photo needs its own signed URL to display.
+  const photosWithUrls = await Promise.all(
+    (photos ?? []).map(async (p) => {
+      const { data } = await supabase.storage
+        .from('project-files')
+        .createSignedUrl(p.storage_key, 3600);
+      return { ...p, signedUrl: data?.signedUrl ?? null };
+    })
+  );
+
   return (
     <div>
       <Link href={`/admin/projects/${projectId}/milestones`} className="mb-4 inline-block text-sm text-ink-soft hover:text-navy">
@@ -91,9 +101,23 @@ export default async function MilestoneDetailPage({
         <div className="border-t border-line pt-4">
           <p className="mb-2 text-sm font-semibold text-navy">Photos</p>
           <div className="mb-3 grid grid-cols-4 gap-2">
-            {(photos ?? []).map((p) => (
-              <div key={p.id} className="aspect-square rounded-lg bg-navy-tint" title={p.caption ?? ''} />
-            ))}
+            {photosWithUrls.map((p) =>
+              p.signedUrl ? (
+                <a
+                  key={p.id}
+                  href={p.signedUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="aspect-square overflow-hidden rounded-lg bg-navy-tint"
+                  title={p.caption ?? ''}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.signedUrl} alt={p.caption ?? ''} className="h-full w-full object-cover" />
+                </a>
+              ) : (
+                <div key={p.id} className="aspect-square rounded-lg bg-navy-tint" title={p.caption ?? ''} />
+              )
+            )}
           </div>
           <form action={uploadPhotoWithIds} className="flex items-center gap-2">
             <input type="file" name="file" className="text-xs" />
