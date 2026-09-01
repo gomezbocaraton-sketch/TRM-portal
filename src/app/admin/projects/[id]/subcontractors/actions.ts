@@ -35,6 +35,7 @@ export async function addSubcontractor(projectId: number, formData: FormData) {
     email: String(formData.get('email') ?? ''),
     license_number: String(formData.get('licenseNumber') ?? ''),
     license_file_key: licenseKey,
+    license_expiry: formData.get('licenseExpiry') || null,
     insurance_expiry: formData.get('insuranceExpiry') || null,
     insurance_file_key: insuranceKey,
   });
@@ -89,6 +90,29 @@ export async function uploadInvoice(projectId: number, quoteId: number, formData
   const { error } = await supabase
     .from('subcontractor_quotes')
     .update({ invoice_file_key: path })
+    .eq('id', quoteId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/admin/projects/${projectId}/subcontractors`);
+}
+
+// Lien waivers protect against double-payment claims and mechanic's
+// lien filings — collected as proof of payment once an invoice has
+// actually been paid, same document-upload pattern as everything else.
+export async function uploadLienWaiver(projectId: number, quoteId: number, formData: FormData) {
+  const supabase = await createClient();
+  const file = formData.get('waiverFile') as File | null;
+  if (!file || file.size === 0) throw new Error('Please choose a file.');
+
+  const path = `${projectId}/subcontractors/lien-waivers/${Date.now()}-${file.name}`;
+  const { error: uploadError } = await supabase.storage.from('project-files').upload(path, file);
+  if (uploadError) throw new Error(uploadError.message);
+
+  const { error } = await supabase
+    .from('subcontractor_quotes')
+    .update({
+      lien_waiver_file_key: path,
+      lien_waiver_received_date: new Date().toISOString().slice(0, 10),
+    })
     .eq('id', quoteId);
   if (error) throw new Error(error.message);
   revalidatePath(`/admin/projects/${projectId}/subcontractors`);
