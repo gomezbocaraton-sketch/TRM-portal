@@ -169,7 +169,7 @@ export default async function SubcontractorsTab({ params }: { params: Promise<{ 
 
                           {q.status === 'approved' && !q.invoiceUrl && (
                             <form action={invoiceWithIds} className="flex items-center gap-2">
-                              <input type="file" name="invoiceFile" className="text-xs" />
+                              <input type="file" name="invoiceFile" required className="text-xs" />
                               <button className="rounded-lg border border-line px-2.5 py-1 text-xs font-semibold text-navy">Upload invoice</button>
                             </form>
                           )}
