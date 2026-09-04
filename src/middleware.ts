@@ -1,50 +1,67 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
+import { readSupabaseEnv } from "@/lib/env";
 
-// Phase 1: only admins exist, so this just checks "are you logged in?"
-// and keeps the session cookie fresh. When client logins are added
-// later, role-based branching (like /admin vs /client) gets added here.
 export async function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  const env = readSupabaseEnv();
+
+  // Misconfigured? Show the setup page rather than crashing the request.
+  if (!env.ok) {
+    if (path === "/setup") return NextResponse.next({ request });
+    const url = request.nextUrl.clone();
+    url.pathname = "/setup";
+    return NextResponse.rewrite(url);
+  }
+  // Configured correctly — /setup has nothing to say.
+  if (path === "/setup") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/quotes";
+    return NextResponse.redirect(url);
+  }
+
   let response = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  try {
+    const supabase = createServerClient(env.url, env.anonKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        setAll(list: { name: string; value: string; options: CookieOptions }[]) {
+          list.forEach(({ name, value }) => request.cookies.set(name, value));
           response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
+          list.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           );
         },
       },
+    });
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user && path !== "/login") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
     }
-  );
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const path = request.nextUrl.pathname;
-  const isLoginRoute = path.startsWith('/login');
-
-  if (!user && !isLoginRoute) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    if (user && path === "/login") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/quotes";
+      return NextResponse.redirect(url);
+    }
+    return response;
+  } catch (err) {
+    // Never 500 the whole site over a session lookup. Send the visitor to
+    // the login page, where a failure is visible and recoverable.
+    console.error("[middleware] session check failed:", err);
+    if (path === "/login") return NextResponse.next({ request });
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
   }
-  if (user && isLoginRoute) {
-    return NextResponse.redirect(new URL('/admin', request.url));
-  }
-
-  return response;
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)"],
 };

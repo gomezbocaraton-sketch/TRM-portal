@@ -1,15 +1,16 @@
-import type { Metadata } from 'next';
-import './globals.css';
+import type { Metadata } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: 'TRM Partners — Client Portal',
-  description: 'Construction management portal for TRM Partners LLC',
+  title: "Quote Desk — Code Consultation NYC",
+  description: "Quotes, jobs, payments and documents for Code Consultation NYC Inc.",
+  icons: { icon: "/icon.png" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-paper text-ink font-sans antialiased">{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

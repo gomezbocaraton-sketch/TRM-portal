@@ -1,3 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Bitter:wght@500;700&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body { @apply bg-paper text-ink font-sans antialiased; }
+  h1, h2, h3 { @apply font-display; }
+}
+
+@layer components {
+  .btn        { @apply inline-flex items-center justify-center rounded-sm border border-navy bg-navy px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed; }
+  .btn-ghost  { @apply inline-flex items-center justify-center rounded-sm border border-rule-strong bg-transparent px-4 py-2 text-sm font-medium text-ink transition hover:bg-surface-2; }
+  .btn-sm     { @apply px-2.5 py-1 text-xs; }
+  .btn-danger { @apply inline-flex items-center justify-center rounded-sm border border-rule-strong px-2.5 py-1 text-xs text-risk transition hover:bg-risk-soft; }
+  .field      { @apply w-full rounded-sm border border-rule-strong bg-paper px-2.5 py-1.5 text-sm outline-none focus:border-orange focus:ring-1 focus:ring-orange; }
+  .lbl        { @apply mb-1 block font-mono text-[.65rem] uppercase tracking-[.08em] text-ink-3; }
+  .panel      { @apply border border-rule bg-surface shadow-sm; }
+  .phead      { @apply flex items-center gap-2 border-b border-rule bg-surface-2 px-3.5 py-2.5 font-mono text-[.68rem] uppercase tracking-[.1em] text-ink-3; }
+  .th         { @apply whitespace-nowrap border-b border-rule-strong bg-surface-2 px-3 py-2 text-left font-mono text-[.63rem] font-medium uppercase tracking-[.08em] text-ink-3; }
+  .td         { @apply border-b border-rule px-3 py-2 align-middle; }
+  .num        { @apply text-right font-mono tabular-nums whitespace-nowrap; }
+  .pill       { @apply inline-block rounded-full px-2 py-0.5 font-mono text-[.66rem] uppercase tracking-[.05em] whitespace-nowrap; }
+}
